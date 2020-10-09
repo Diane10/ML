@@ -42,9 +42,9 @@ newdata['PaymentMethod']=le.fit_transform(newdata['PaymentMethod'])
 newdata['Churn']=le.fit_transform(newdata['Churn'])
 newdata['TotalCharges']=newdata['TotalCharges'].fillna(newdata['TotalCharges'].mean)
 newdata['TotalCharges'] = pd.to_numeric(newdata['TotalCharges'], errors='coerce')
-
+new=newdata[['gender','OnlineSecurity','TechSupport','PaymentMethod','Churn']]
 #X=newdata[['gender','Dependents','tenure','PhoneService','InternetService','OnlineSecurity','OnlineBackup','TechSupport','PaymentMethod']]
-X=newdata[['gender','OnlineSecurity','TechSupport','PaymentMethod']]
+X=newdata[['gender','OnlineSecurity','TechSupport','PaymentMethod','Churn']]
 
 y=newdata['Churn']
 X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.3, random_state=0)
@@ -74,7 +74,19 @@ if st.sidebar.checkbox("Show Encoded Data"):
     st.write(newdata)
 if st.sidebar.checkbox("Show a Statistical Analysis"):
 	st.write(newdata.describe())
-    
+
+st.sidebar.subheader('Visualization')
+if st.sidebar.checkbox("Pair plot",False):
+   import seaborn as sns
+   st.subheader('Pairplot Graph')
+   sns.pairplot(new, hue="Churn")
+   st.pyplot()
+if st.sidebar.checkbox("Graph plot",False):
+   import seaborn as sns
+   st.subheader('Counter plot')
+   sns.countplot(y="Churn", data=new)
+   st.pyplot()
+
 st.sidebar.subheader('Choose Classifer')
 classifier_name = st.sidebar.selectbox(
     'Choose classifier',
@@ -248,10 +260,10 @@ if classifier_name == 'XGBOOST':
 if st.sidebar.checkbox("Do u want to predict?",key='prediction'):
 
     st.sidebar.subheader('Model Prediction')
-    gender= st.sidebar.number_input("what is your gender",1,0,step=1,key='gender')
-    security= st.sidebar.number_input("number of the seed",1,0,step=1,key='security')
-    techsupport= st.sidebar.number_input("number of the seed",1,0,step=1,key='support')
-    PaymentMethod= st.sidebar.number_input("number of the seed",1,3,step=1,key='payment')
+    gender= st.sidebar.number_input("what is your gender?",1,3,step=1,key='gender')
+    security= st.sidebar.number_input("do u have online security?",1,3,step=1,key='security')
+    techsupport= st.sidebar.number_input("do u have Techsupport",1,3,step=1,key='support')
+    PaymentMethod= st.sidebar.number_input("do u have PaymentMethod",1,3,step=1,key='payment')
 
     if st.sidebar.button("Prediction",key='predict'):
         X_predict=[[gender,security,techsupport,PaymentMethod]]
