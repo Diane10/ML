@@ -1,0 +1,90 @@
+%%writefile app.py
+import streamlit as st
+
+import streamlit as st 
+import numpy as np 
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score,plot_confusion_matrix,plot_roc_curve,precision_score,recall_score,precision_recall_curve
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+
+st.title('Machine Learning Application')
+st.subheader("Machine Learning Analysis")
+st.markdown("""
+Note: the target should be at the end
+""")
+st.sidebar.title('Data Collection')
+
+
+
+
+X = st.text_input("paste link here")
+if st.button("submit",key='classify'):
+  data=pd.read_csv(X)
+  st.write(data.head())
+  
+
+st.sidebar.subheader('Choose Classifer')
+classifier_name = st.sidebar.selectbox(
+    'Choose classifier',
+    ('KNN', 'SVM', 'Random Forest','Logistic Regression')
+)
+if classifier_name == 'SVM':
+    st.sidebar.subheader('Model Hyperparmeter')
+    c= st.sidebar.number_input("c(Reguralization)",0.01,10.0,step=0.01,key='c')
+    kernel= st.sidebar.radio("kernel",("linear","rbf"),key='kernel')
+    gamma= st.sidebar.radio("gamma(kernel coefficiency",("scale","auto"),key='gamma')
+
+    metrics= st.sidebar.multiselect("What is the metrics to plot?",('confusion matrix','roc_curve','precision_recall_curve'))
+
+    if st.sidebar.button("classify",key='classify'):
+        st.subheader("SVM result")
+        le=LabelEncoder()
+        data=pd.read_csv(X)
+        newdata= data.copy()
+        newdata['gender']=le.fit_transform(newdata['gender'])
+        newdata['Dependents']=le.fit_transform(newdata['Dependents'])
+        newdata['PhoneService']=le.fit_transform(newdata['PhoneService'])
+        newdata['InternetService']=le.fit_transform(newdata['InternetService'])
+        newdata['OnlineSecurity']=le.fit_transform(newdata['OnlineSecurity'])
+        newdata['OnlineBackup']=le.fit_transform(newdata['OnlineBackup'])
+        newdata['TechSupport']=le.fit_transform(newdata['TechSupport'])
+        newdata['PaymentMethod']=le.fit_transform(newdata['PaymentMethod'])
+        newdata['Churn']=le.fit_transform(newdata['Churn'])
+        newdata['TotalCharges']=newdata['TotalCharges'].fillna(newdata['TotalCharges'].mean)
+        newdata['TotalCharges'] = pd.to_numeric(newdata['TotalCharges'], errors='coerce')
+        class_name=['yes','no']
+
+
+        X=newdata[['gender','Dependents','tenure','PhoneService','InternetService','OnlineSecurity','OnlineBackup','TechSupport','PaymentMethod']]
+        y=newdata['Churn']
+        X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.3, random_state=0)
+        svcclassifier= SVC(C=c,kernel=kernel,gamma=gamma)
+        svcclassifier.fit(X_train,y_train)
+        y_pred= svcclassifier.predict(X_test)
+        acc= accuracy_score(y_test,y_pred)
+        st.write("Accuracy:",acc.round(2))
+        st.write("precision_score:",precision_score(y_test,y_pred,labels=class_name).round(2))
+        st.write("recall_score:",recall_score(y_test,y_pred,labels=class_name).round(2))
+        class_name=['yes','no']
+        if 'confusion matrix' in metrics:
+            st.subheader('confusion matrix')
+            class_name=['yes','no']
+            plot_confusion_matrix(svcclassifier,X_test,y_test,display_labels=class_name)
+            st.pyplot()
+        if 'roc_curve' in metrics:
+            st.subheader('plot_roc_curve')
+            class_name=['yes','no']
+            plot_roc_curve(svcclassifier,X_test,y_test)
+            st.pyplot()
+        if 'precision_recall_curve' in metrics:
+            st.subheader('precision_recall_curve')
+            plot_roc_curve(svcclassifier,X_test,y_test)
+            st.pyplot()
